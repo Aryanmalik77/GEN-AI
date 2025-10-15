@@ -1,0 +1,39 @@
+from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.output_parsers import PydanticOutputParser
+from pydentic import BaseModel,Feild,Literal
+from dotenv import load_dotenv
+from langchain.schema.runnable import RunnableParallel,RunnableBranch,RunnableLambda
+load_dotenv()
+llm = HuggingFaceEndpoint(
+    repo_id= "deepseek-ai/DeepSeek-V3.2-Exp",
+    task = "text-generation",
+huggingfacehub_api_token =""
+)
+model = ChatHuggingFace(llm = llm)
+parser = StrOutputParser()
+class Feedback(BaseModel):
+    sentiment:Literal['positive','negitive'] = Feild (description = "give the sentiment of the Feedback")
+parser2 = PydanticOutputParser(pydentic_object = Feedback)
+
+prompt1 = PromptTemplate(
+    template = "classify the sentiment of the following text weather positive or negetive\n{Feedback},{format_instructions",
+    input_variables = ["Feedback"],
+    partial_variables = {"format_instructions":parser2.get_format_instructions}
+)
+classifier = prompt1|model|parser2
+prompt2 = PromptTemplate(
+    template = "write an appropriate response to the positive feedback\n{Feedback}",
+    input_variables = ["Feedback"]
+)
+prompt2 = PromptTemplate(
+    template = "write an appropriate response to the negitive feedback\n{Feedback}",
+    input_variables = ["Feedback"])
+branch_chain =RunnableBranch(
+    (lambda x:x.sentiment=="positive",prompt2|model|parser2),
+    (lambda x:x.sentiment=="negetivee",prompt3|model|parser2),
+    RunnableLambda(lambda x : "coudnot find the sentimat")
+)
+chain = classifier|branch_chain
+print(chain.invoke({"Feedbaack ":"tis is a terriable phone"}))
