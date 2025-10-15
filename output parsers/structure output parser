@@ -1,0 +1,31 @@
+from langchain_huggingface import ChatHuggingFace,HuggingFaceEndpoint
+from dotenv import load_dotenv
+from langchain_core.prompts import PromptTemplate
+from langchain.output_parsers import StructuredOutputParser,ResponseSchema
+import os
+load_dotenv()
+hf_token = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+
+llm = HuggingFaceEndpoint(
+    repo_id = "HuggingFaceH4/zephyr-7b-beta",
+    task = "text-generation",
+    huggingfacehub_api_token = ""
+
+)
+model = ChatHuggingFace(llm = llm)
+
+schema = [
+    ResponseSchema(name = "fact1", description = "give topic about the fact 1"),
+    ResponseSchema(name = "fact2", description = "give topic about the fact 2"),
+    ResponseSchema(name = "fact3", description = "give topic about the fact 3")
+]
+
+parser = StructuredOutputParser.from_response_schemas(schema)
+prompt = PromptTemplate(
+    template = "give the fact about the {topic} \n {format_instructions}",
+    input_variables = ["topic"],
+    partial_variables={"format_instructions":parser.get_format_instructions()}
+)
+chains = prompt|model|parser
+result = chains.invoke({"topic":"father"})
+print(result)
