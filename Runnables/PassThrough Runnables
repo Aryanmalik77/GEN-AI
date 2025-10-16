@@ -1,0 +1,32 @@
+from langchain_huggingface import ChatHuggingFace,HuggingFaceEndpoint
+from langchain_core.prompts import PromptTemplate
+from dotenv import load_dotenv
+from langchain_core.output_parsers import StrOutputParser
+from langchain.schema.runnable import RunnableSequence, RunnableParallel, RunnablePassthrough
+load_dotenv()
+llm = HuggingFaceEndpoint(
+    repo_id = "deepseek-ai/DeepSeek-V3.2-Exp",
+    task = "text-generation",
+    huggingfacehub_api_token = ""
+)
+model = ChatHuggingFace(llm = llm)
+prompt1 = PromptTemplate(
+    template = "write a tweets about the {topic}",
+    input_variables = ["topic"]
+
+)
+prompt2 = PromptTemplate(
+    template = "write a poem about the {topic}",
+    input_variables = ["topic"]
+
+)
+parser = StrOutputParser()
+tweets_chain = RunnableSequence(prompt1, model, parser)
+chains = RunnableParallel({
+    "tweets":RunnablePassthrough(),
+    "poem":RunnableSequence(prompt2, model, parser)
+
+})
+finalChain = RunnableSequence(tweets_chain,chains)
+result = finalChain.invoke({"topic":"ai"})
+print(result)
