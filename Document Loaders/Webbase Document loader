@@ -1,0 +1,5 @@
+from langchain_community .document_loaders import WebBaseLoader
+url = "https://www.apple.com/in/shop/buy-iphone/iphone-17-pro/6.3%22-display-256gb-cosmic-orange?afid=p240%7Cgo~cmp-11189655312~adg-185494852499~ad-773651676886_pla-2439184918239~dev-c~ext-~prd-MG8H4HN%2FA-IN~mca-5055540~nt-search&cid=aos-in-kwgo-pla-iphone--product-MG8H4HN%2FA-IN"
+loader = WebBaseLoader(url)
+docs = loader.load()
+print(docs)
