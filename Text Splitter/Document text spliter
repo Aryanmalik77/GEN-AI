@@ -1,0 +1,14 @@
+from langchain.text_splitter import  RecursiveCharacterTextSplitter,Language
+text = """def greet_user():
+    name = input("Enter your name: ")
+    print(f"Hello, {name}! 👋 Welcome to Python programming!")
+
+if __name__ == "__main__":
+    greet_user()"""
+splitter = RecursiveCharacterTextSplitter.from_language(
+    language = Language.PYTHON,
+    chunk_size=200,
+    chunk_overlap= 0,
+)
+result = splitter.split_text(text)
+print(result)
