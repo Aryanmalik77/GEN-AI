@@ -1,0 +1,29 @@
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.vectorstores import Chroma
+from langchain.schema import Document
+docs1 = Document(
+    page_content="virat kohli is a good  batsman player",
+    metadata = {"team":"RCB"}
+)
+doc2 = Document(
+    page_content = "bumraha is a good bowler",
+    metadata = {"team":"CSK"}
+
+)
+docs3 = Document(
+    page_content  = "shubman gill is good batsman",
+    metadata = {"team":"MI"}
+)
+
+docs = [docs1,doc2,docs3]
+vector_store = Chroma(
+    embedding_function=HuggingFaceEmbeddings(),
+    persist_directory="chroma_db1",
+    collection_name="sample"
+)
+print(vector_store.add_documents(docs))
+print(vector_store.get(include = ["embeddings","documents","metadata"]))
+print(vectore_store.similarity_search(
+    query = "who is among bowler",
+    k = 1
+))
