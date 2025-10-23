@@ -1,0 +1,44 @@
+from langchain import requests
+from langchain_core.messages import HumanMessage
+from langchain_core.messages.tool import tool_call
+from langchain.tools import tool
+import requests
+from  langchain_huggingface import ChatHuggingFace,HuggingFaceEndpoint
+from langchain_core.tools import InjectedToolArg
+from typing import Annotated
+import json
+@tool
+def get_conversion_factor(base_currency:str,target_currency:str) -> float:
+    """this fetches the currency conversion factor from the base currency and target currency."""
+    url = f'https://v6.exchangerate-api.com/v6/b897a435ab68b8607151f331/pair/{base_currency}/{target_currency}'
+    response = requests.get(url)
+    return response.json()
+print(get_conversion_factor.invoke({"base_currency":"USD","target_currency":"INR"}))
+@tool
+def convert(base_currency_value:int,conversion_rate:Annotated[float,InjectedToolArg]) -> float:
+    """this converts target currency from a give base currency"""
+    return base_currency_value * conversion_rate
+print(convert.invoke({"base_currency_value":10,"conversion_rate":85.15}))
+llm = HuggingFaceEndpoint(
+    repo_id = "deepseek-ai/DeepSeek-V3.2-Exp",
+    task = "text-generation",
+    huggingfacehub_api_token = ""
+)
+model = ChatHuggingFace(llm = llm)
+llm_tools = model.bind_tools([get_conversion_factor,convert])
+message = [HumanMessage("what is the conversion factor between USD and INR, and based on that convert 10 usd to inr")]
+ai_message = llm_tools.invoke(message)
+print(ai_message.tool_calls)
+for tool_call in ai_message.tool_calls:
+    if tool_call["name"] == get_conversion_factor:
+        tool_message1 = get_conversion_factor.invoke(tool_call)
+        print(tool_message1)
+        conversion_rate=json.loads(tool_message1.content)["conversion_rate"]
+        message.append(tool_message1)
+    if tool_call["name"] == convert:
+        tool_call["args"]["conversion_rate"] = conversion_rate
+        tool_message2 = convert.invoke(tool_call)
+        message.append(tool_message2)
+
+print(message)
+print(llm_tools.invoke(message).content)
